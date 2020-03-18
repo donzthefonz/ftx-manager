@@ -1,0 +1,24 @@
+# configuration.yaml file
+
+accounts:
+  # main account should generally be empty of capital/collateral and positions. It will be the managing account for the rest
+  master_account:
+    subaccount_name: ''
+    api_key: ''
+    api_secret: ''
+    master_account: True
+  subaccount1:
+    subaccount_name: ''
+    api_key: ''
+    api_secret: ''
+    master_account: False
+  subaccount2:
+    subaccount_name: ''
+    api_key: ''
+    api_secret: ''
+    master_account: False
+  subaccount3:
+    subaccount_name: ''
+    api_key: ''
+    api_secret: ''
+    master_account: False
