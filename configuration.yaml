@@ -12,7 +12,7 @@ accounts:
 #      - 'SUB ACCOUNT NAME 2'
 #      - 'SUB ACCOUNT NAME 3'
 
-#  - account_name: "" # Uncomment out this and add as many blocks as you like to manage more than one FTX Account
+#  - account_name: "" # Uncomment out this and add as many blocks as you like to manage more than one FTX Master Account
 #    api_key: ''
 #    api_secret: ''
 #    anti_algo_subaccount_name: ''
