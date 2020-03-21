@@ -15,9 +15,6 @@ from examples import custom_style_3, custom_style_2
 import yaml
 from ftx.ftx_operations import FTXMasterAccount
 from tabulate import tabulate
-import locale
-
-locale.setlocale(locale.LC_ALL, '')
 
 from babel.numbers import format_currency
 
@@ -87,9 +84,14 @@ print('')
 
 
 def initialise_yaml():
-    with open(r'configuration.yaml') as file:
-        dataMap = yaml.safe_load(file)
-        return dataMap
+    try:
+        with open(r'configuration_dev.yaml') as file:
+            dataMap = yaml.safe_load(file)
+            return dataMap
+    except Exception as e:
+        with open(r'configuration.yaml') as file:
+            dataMap = yaml.safe_load(file)
+            return dataMap
 
 
 def get_master_accounts():
@@ -486,8 +488,6 @@ def print_balances(master_account):
 
 def main():
     try:
-        DEBUG = False
-
         config = initialise_yaml()
         accounts = config['accounts']
         settings = config['settings']
@@ -523,10 +523,13 @@ def main():
 
             master.initialise()
 
-            if not DEBUG:
+            try:
                 ask_root_question(master)
-            else:
+            except Exception as e:
+                # Assume we are in debug mode rather than running from windows CMD
+                # Run feature being tested
                 track_liquidity(master)
+
 
     except Exception as e:
         print(e)
