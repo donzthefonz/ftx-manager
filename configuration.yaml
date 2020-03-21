@@ -2,8 +2,8 @@
 
 accounts:
   - account_name: "Example Account Name" # account_name is arbitrary, simply used for printing to the console
-    api_key: 'XxxxXXXXXxxxxXXXXxxxxXXXXX'
-    api_secret: 'YYYYyyyyyYYYYyyyyYYYYYyyy'
+    api_key: 'XxxxXXXXXxxxxXXXXxxxxXXXXX' # required (create api key from main FTX account)
+    api_secret: 'YYYYyyyyyYYYYyyyyYYYYYyyy' # required (create api key from main FTX account)
     anti_algo_subaccount_name: 'EMPTY SUB ACCOUNT NAME' # anti_algo_subaccount_name is only necessary if
                                                         # re-balancing portfolio.
     subaccount_names: # The script will auto populate with all sub accounts,
@@ -23,8 +23,20 @@ accounts:
 
 
 settings:
-  # Ideal Percentages should all add up to 100%
+  # Ideal Percentages should all add up to 100% - not used for anything yet
   ideal_btc_collateral_percentage: 30
   ideal_usd_collateral_percentage: 50
   ideal_eth_collateral_percentage: 20
   ideal_ftt_collateral_percentage: 0
+  liquidity_tracker:
+    all: False # If False, will use the markets listed below. If True, get all possible markets.
+    markets_list:
+      - "BTC-PERP"
+      - "ETH-PERP"
+      - "BCH-PERP"
+      - "TRX-PERP"
+      - "EOS-PERP"
+      - "BSV-PERP"
+      - "ADA-PERP"
+      - "BNB-PERP"
+      - "XTZ-PERP"

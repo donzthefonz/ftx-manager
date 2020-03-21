@@ -19,7 +19,7 @@ class Order:
 
 
 class FTXMasterAccount:
-    def __init__(self, key, secret, account_name):
+    def __init__(self, key, secret, account_name, settings):
         self.account_name = account_name
         self.client: FtxClient
         self.key = key
@@ -28,6 +28,7 @@ class FTXMasterAccount:
         self.sub_accounts = {}
         self.anti_algo_subaccount = FtxClient
         self.anti_algo_subaccount_name = ''
+        self.settings = settings
 
     def initialise(self):
         self.connect()

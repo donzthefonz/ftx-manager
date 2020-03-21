@@ -24,6 +24,7 @@ from babel.numbers import format_currency
 # Initialise Variables
 global master
 
+
 class objdict(dict):
     def __getattr__(self, name):
         if name in self:
@@ -122,8 +123,8 @@ operation_question = [{
     'type': 'list',
     'name': 'operation',
     'message': 'What operation do you want to perform?',
-    'choices': ['View Balances', 'View Positions', 'Lock In Profits', 'Close Positions', 'Rebalance Portfolio',
-                'Track Liquidity', 'Scaled Order', 'Exit'],
+    'choices': ['View Balances', 'Track Liquidity', 'View Positions', 'Close Positions', 'Rebalance Portfolio',
+                'Scaled Order', 'Exit'],
     'filter': lambda val: val.lower(),
     'when': always_show
 }]
@@ -313,10 +314,12 @@ def print_master_account_summary(account: FTXMasterAccount):
 
     print("Master Account: [{}]".format(account.account_name))
     print("Accounts: [{}]".format(account_list))
+    print(" ")
     total_usd_val = round(account.total_usd_value, 2)
     total_btc_val = round(account.total_btc_value, 8)
     print("Total USD Value of this account: {}".format(format_currency(total_usd_val, 'USD', locale='en_US')))
     print("Total BTC Value of this account: {} BTC".format(str(total_btc_val)))
+    print(" ")
 
     total_btc_col, btc_usd_val = account.total_btc_collateral
     total_usd_col, usd_usd_val = account.total_usd_collateral
@@ -336,6 +339,7 @@ def print_master_account_summary(account: FTXMasterAccount):
     print_formatting()
     print_title("SUMMARY OF STRATEGIES")
     print("Accounts: [{}]".format(account_list))
+    print(" ")
 
     table = []
     for sub_name, sub_client in account.sub_accounts.items():
@@ -362,10 +366,19 @@ def track_liquidity(account: FTXMasterAccount):
     """ Print out the current value in USD liquidity for LRAIC tradable assets"""
     print_formatting()
     print_title("LIQUIDITY TRACKER (1% Away from Asks/Bids)")
-    assets = ["BTC-PERP", "ETH-PERP", "BCH-PERP", "TRX-PERP", "EOS-PERP", "BSV-PERP", "ADA-PERP", "BNB-PERP",
-              "XTZ-PERP",
-              ]
+    assets = []
+
+    if account.settings.liquidity_tracker['all']:
+        # Get list of all markets
+        markets = account.client.list_markets()
+        for market in markets:
+            assets.append(market['name'])
+    else:
+        assets = account.settings.liquidity_tracker['markets_list']
+
     table = []
+
+    asset_with_liquidty = []
 
     for asset in assets:
         # Get orderbook details
@@ -393,10 +406,21 @@ def track_liquidity(account: FTXMasterAccount):
             else:
                 break
 
+        liquidy_dict = {}
+        liquidy_dict['asset'] = asset
+        liquidy_dict['ask_liquidity'] = ask_liquidity
+        liquidy_dict['bid_liquidity'] = bid_liquidity
+
+        asset_with_liquidty.append(liquidy_dict)
+
+    # Sort the list by liquidity
+    sorted_liquidity = sorted(asset_with_liquidty, key=lambda x: x['bid_liquidity'], reverse=True)
+
+    for asset in sorted_liquidity:
         inner_list = []
-        inner_list.append(asset)
-        inner_list.append(locale.currency(ask_liquidity, grouping=True))
-        inner_list.append(locale.currency(bid_liquidity, grouping=True))
+        inner_list.append(asset['asset'])
+        inner_list.append(format_currency(asset['ask_liquidity'], 'USD', locale='en_US'))
+        inner_list.append(format_currency(asset['bid_liquidity'], 'USD', locale='en_US'))
         table.append(inner_list)
 
     headers = ["Asset", "USD Ask Liquidity", "USD Bid Liquidity"]
@@ -464,6 +488,8 @@ def main():
 
         config = initialise_yaml()
         accounts = config['accounts']
+        settings = config['settings']
+        settings = objdict(settings)
         master_account = None
         if len(accounts) > 1:
             try:
@@ -482,14 +508,13 @@ def main():
             print("No master accounts detected. Is your configuration.yaml set up correctly?")
 
         if master_account is not None:
-            print("got master")
             master_account = objdict(master_account)
             anti_algo_subaccount_name = master_account.anti_algo_subaccount_name
             subaccount_names = master_account.subaccount_names
 
             # Initialise accounts
             master: FTXMasterAccount = FTXMasterAccount(master_account['api_key'], master_account['api_secret'],
-                                                        master_account.account_name)
+                                                        master_account.account_name, settings)
             if subaccount_names is not None:
                 master.sub_account_names.extend(subaccount_names)
             master.anti_algo_subaccount_name = anti_algo_subaccount_name
@@ -499,7 +524,7 @@ def main():
             if not DEBUG:
                 ask_root_question(master)
             else:
-                print_master_account_summary(master)
+                track_liquidity(master)
 
     except Exception as e:
         print(e)
