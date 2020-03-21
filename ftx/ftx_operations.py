@@ -22,26 +22,26 @@ class Position:
         elif self.open_size < 0:
             return "Short"
 
-    @property
-    def current_pnl(self):
-        self.client: FtxClient
-        mark_price = self.client.get_last_price(self.market)
-        pnl = 0
-
-        price_diff = mark_price - self.entry_price
-        percent_diff = (price_diff / self.entry_price)
-
-        if self.side == 'Long':
-            pnl = (price_diff * abs(self.open_size))
-        elif self.side == 'Short':
-            pnl = (price_diff * abs(self.open_size) * -1)
-        else:
-            pnl = 0
-
-        open_value = abs(self.open_size) * self.entry_price
-        pnl_percent = pnl / open_value * 100
-        self.pnl_percent = pnl_percent
-        return pnl
+    # @property
+    # def current_pnl(self):
+    #     self.client: FtxClient
+    #     mark_price = self.client.get_last_price(self.market)
+    #     pnl = 0
+    #
+    #     price_diff = mark_price - self.entry_price
+    #     percent_diff = (price_diff / self.entry_price)
+    #
+    #     if self.side == 'Long':
+    #         pnl = (price_diff * abs(self.open_size))
+    #     elif self.side == 'Short':
+    #         pnl = (price_diff * abs(self.open_size) * -1)
+    #     else:
+    #         pnl = 0
+    #
+    #     open_value = abs(self.open_size) * self.entry_price
+    #     pnl_percent = pnl / open_value * 100
+    #     self.pnl_percent = pnl_percent
+    #     return pnl
 
 
 class Order:

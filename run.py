@@ -70,6 +70,23 @@ def validate(document):
             cursor_position=len(document.text))  # Move cursor to end
 
 
+def validate_percent(document):
+    try:
+        int(document)
+        ok = False
+        if (int(document) and (int(document) > 0) and (int(document) < 101)):
+            ok = True
+        if not ok:
+            raise ValidationError(
+                message='Please enter a valid number between 1 and 100.',
+                cursor_position=len(document.text))  # Move cursor to end
+    except ValueError:
+        raise ValidationError(
+            message='Please enter a number between 1 and 100',
+            cursor_position=len(document.text))  # Move cursor to end
+
+
+
 class NumberValidator(Validator):
     def validate(self, document):
         try:
@@ -111,6 +128,18 @@ def get_master_account_list():
     for account in accounts:
         names.append(account['account_name'])
     return names
+
+
+def get_positions_list(answers):
+    position_list = []
+    positions = master.list_all_positions()
+    for position in positions:
+        position: Position
+        # position_details = "Market: {}  |   Side: {}  |   PnL: {}".format(str(position.market), str(position.side),
+        #                                                                 str(position.recent_pnl))
+        position_details = position.market
+        position_list.append(position_details)
+    return position_list
 
 
 master_account_question = [{
@@ -169,13 +198,29 @@ account_question = [{
     'filter': lambda val: val.lower()
 }]
 
-positions_question = [{
-    'type': 'list',
-    'name': 'positons_operation',
-    'message': 'What do you want to do with your positions?',
-    'choices': ['Close All Positions', 'Close Long Positions', 'Close Short Positions'],
-    'filter': lambda val: val.lower()
-}]
+position_questions = [
+    {
+        'type': 'list',
+        'name': 'positions_operation',
+        'message': 'What do you want to do with your positions?',
+        'choices': ['Close a Position', 'Close All Positions', 'Close Long Positions', 'Close Short Positions'],
+        'filter': lambda val: val.lower()
+    }
+    ,
+    {
+        'type': 'list',
+        'name': 'which_position',
+        'message': 'Which position do you want to alter?',
+        'choices': get_positions_list,
+        'filter': lambda val: val.lower(),
+        'when': lambda answers: answers['positions_operation'] == 'close a position'
+    },
+    {
+        'type': 'input',
+        'name': 'close_percent',
+        'message': 'Which percentage of the chosen positions do you want to close?',
+    }
+]
 
 rebalance_question = [{
     'type': 'list',
@@ -474,11 +519,16 @@ def view_positions(master_account):
     print_formatting()
 
 
+def ask_position_questions(master_account: FTXMasterAccount):
+    position_answers = prompt(position_questions, style=custom_style_3)
+
+
 def ask_root_question(master_account):
     operation_answers = prompt(operation_question, style=custom_style_3)
     # print(str(operation_answers))
     if operation_answers['operation'] == 'close positions':
-        close_all_positions(master_account)
+        ask_position_questions(master_account)
+        ask_root_question(master_account)
     elif operation_answers['operation'] == 'view balances':
         print_master_account_summary(master_account)
         ask_root_question(master_account)
@@ -548,13 +598,16 @@ def main():
 
             master_account.initialise()
 
+            global master
+            master = master_account
+
             try:
                 ask_root_question(master_account)
             except Exception as e:
                 print(e)
                 # Assume we are in debug mode rather than running from windows CMD
                 # Run feature being tested
-                view_positions(master_account)
+                get_positions_list(master_account)
 
 
     except Exception as e:
