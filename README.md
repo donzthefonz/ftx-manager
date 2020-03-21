@@ -6,7 +6,7 @@ A command line tool that helps manage capital across multiple FTX sub-accounts.
 
 
 Very much a work in progress, there are options in the command line that you can choose but will not do anything.
-If you select them, the script will just exit. I have not written any code for orders/trades yet so no risk of that.
+If you select them, the script will just exit. I have not written any code for orders/trades yet so no risk of major malfunction.
 
 
 **Working Features:**
