@@ -4,15 +4,17 @@ A command line tool that helps manage capital across multiple FTX sub-accounts.
 **Requirements**
  - Python
 
+
 Very much a work in progress, there are options in the command line that you can choose but will not do anything.
 If you select them, the script will just exit. I have not written any code for orders/trades yet so no risk of that.
 
-Working Features:
+
+**Working Features:**
   - View Balances (aggregates across multiple subaccounts and summarises them by USD/BTC value and collateral percentages.)
   - Track Liquidity (prints the USD value between bid and - 1% as well as ask + 1% of each asset.)
   
   
-To-do List:
+**To-do List:**
   - View Positions (across sub accounts)
   - Close All Positions by X% (capiture profits easily when you think we're over bought/sold.)
   - Rebalance Portfolio (give the script your desired % for each collateral and it will buy/sell to get their on each sub account.)
