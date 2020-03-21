@@ -24,7 +24,7 @@ If you select them, the script will just exit. I have not written any code for o
  **Run Instructions**
  
 Fill in the configuration.yaml with your settings. Required fields are at least one main account with API credentials.
-Create this from you main FTX account (not a sub account) if you want all features to work properly. Read-Only access should 
+Create this from your main FTX account (not a sub account) if you want all features to work properly. Read-Only access should 
 be fine for now though later I want to add the ability to rebalance portfolios (in which case read-only will not work).
 
 1. Download the zip and extract it.
