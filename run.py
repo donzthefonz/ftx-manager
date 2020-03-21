@@ -13,13 +13,14 @@ from PyInquirer import Validator, ValidationError, print_json
 
 from examples import custom_style_3, custom_style_2
 import yaml
-from ftx.ftx_operations import FTXMasterAccount
+from ftx.ftx_operations import FTXMasterAccount, Position, Order
 from tabulate import tabulate
 
 from babel.numbers import format_currency
 
 # Initialise Variables
 global master
+master: FTXMasterAccount
 
 
 class objdict(dict):
@@ -284,7 +285,7 @@ def print_account_details(sub_account: FTXMasterAccount):
                  ["USD", total_usd_col, usd_usd_val, usd_percent], ["FTT", total_ftt_col, ftt_usd_val, ftt_percent],
                  ["Total", 'N/A', total_usd_val, "100%"]]
         headers = ["Asset", "# Coins Owned", "USD Value", "% of Capital"]
-        print(tabulate(table, headers=headers))
+        print(tabulate(table, headers=headers, tablefmt='psql', floatfmt='.8f'))
         print("")
         print("======================================================")
         print("======================================================")
@@ -339,7 +340,7 @@ def print_master_account_summary(account: FTXMasterAccount):
              ["FTT", total_ftt_col, format_currency(ftt_usd_val, 'USD', locale='en_US'), ftt_percent],
              ["Total", 'N/A', format_currency(total_usd_val, 'USD', locale='en_US'), "100%"]]
     headers = ["Asset", "# Coins Owned", "USD Value", "% of Capital"]
-    print(tabulate(table, headers=headers))
+    print(tabulate(table, headers=headers, tablefmt='psql', floatfmt='.8f'))
     print_formatting()
     print_title("SUMMARY OF STRATEGIES")
     print("Accounts: [{}]".format(account_list))
@@ -355,7 +356,7 @@ def print_master_account_summary(account: FTXMasterAccount):
         table.append(inner_list)
 
     headers = ["Sub Account", "USD Value", "% of Capital"]
-    print(tabulate(table, headers=headers))
+    print(tabulate(table, headers=headers, tablefmt='psql', floatfmt='.8f'))
     print(" ")
     print("===========================================================================================================")
     print(" ")
@@ -428,7 +429,7 @@ def track_liquidity(account: FTXMasterAccount):
         table.append(inner_list)
 
     headers = ["Asset", "USD Ask Liquidity", "USD Bid Liquidity"]
-    print(tabulate(table, headers=headers))
+    print(tabulate(table, headers=headers, tablefmt='psql', floatfmt='.8f'))
     print_formatting()
 
 
@@ -449,6 +450,30 @@ def close_all_positions(master_account: FTXMasterAccount):
         # Close positions
 
 
+def view_positions(master_account):
+    print_formatting()
+    print_title("ACCOUNT POSITIONS")
+    all_positions = master_account.list_all_positions()
+    table = []
+    for position in all_positions:
+        position: Position
+        inner_list = []
+        inner_list.append(position.market)
+        inner_list.append(position.sub_account)
+        inner_list.append(position.side)
+        inner_list.append(format(position.open_size, '.8f'))
+        inner_list.append(format_currency(abs(position.cost), 'USD', locale='en_US'))
+        inner_list.append(format_currency(position.recent_pnl, 'USD', locale='en_US'))
+        inner_list.append(format_currency(position.alltime_pnl, 'USD', locale='en_US'))
+
+        table.append(inner_list)
+
+    sorted_table = sorted(table, key=lambda x: x[5], reverse=True)
+    headers = ["Market", "Sub Account", "Side", "Size", "Cost", "Current PnL", "All Time PnL"]
+    print(tabulate(sorted_table, headers=headers, tablefmt='psql', floatfmt='.8f'))
+    print_formatting()
+
+
 def ask_root_question(master_account):
     operation_answers = prompt(operation_question, style=custom_style_3)
     # print(str(operation_answers))
@@ -458,8 +483,8 @@ def ask_root_question(master_account):
         print_master_account_summary(master_account)
         ask_root_question(master_account)
     elif operation_answers['operation'] == 'view positions':
-        # TODO: Implement
-        pass
+        view_positions(master_account)
+        ask_root_question(master_account)
     elif operation_answers['operation'] == 'rebalance portfolio':
         # TODO: Implement
         pass
@@ -515,20 +540,21 @@ def main():
             subaccount_names = master_account.subaccount_names
 
             # Initialise accounts
-            master: FTXMasterAccount = FTXMasterAccount(master_account['api_key'], master_account['api_secret'],
-                                                        master_account.account_name, settings)
+            master_account: FTXMasterAccount = FTXMasterAccount(master_account['api_key'], master_account['api_secret'],
+                                                                master_account.account_name, settings)
             if subaccount_names is not None:
-                master.sub_account_names.extend(subaccount_names)
-            master.anti_algo_subaccount_name = anti_algo_subaccount_name
+                master_account.sub_account_names.extend(subaccount_names)
+            master_account.anti_algo_subaccount_name = anti_algo_subaccount_name
 
-            master.initialise()
+            master_account.initialise()
 
             try:
-                ask_root_question(master)
+                ask_root_question(master_account)
             except Exception as e:
+                print(e)
                 # Assume we are in debug mode rather than running from windows CMD
                 # Run feature being tested
-                track_liquidity(master)
+                view_positions(master_account)
 
 
     except Exception as e:

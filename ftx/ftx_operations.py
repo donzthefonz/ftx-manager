@@ -1,6 +1,49 @@
 from ftx.rest.client import FtxClient
 
 
+class Position:
+    def __init__(self, client, sub_account, market, cost, open_size, entry_price, recent_pnl, alltime_pnl):
+        self.client = client
+        self.sub_account = sub_account
+        self.market = market
+        self.cost = cost
+        self.open_size = open_size
+        self.entry_price = entry_price
+        self.recent_pnl = recent_pnl
+        self.alltime_pnl = alltime_pnl
+        self.pnl_percent = 0
+
+    @property
+    def side(self):
+        if self.open_size == 0:
+            return "Flat"
+        elif self.open_size > 0:
+            return "Long"
+        elif self.open_size < 0:
+            return "Short"
+
+    @property
+    def current_pnl(self):
+        self.client: FtxClient
+        mark_price = self.client.get_last_price(self.market)
+        pnl = 0
+
+        price_diff = mark_price - self.entry_price
+        percent_diff = (price_diff / self.entry_price)
+
+        if self.side == 'Long':
+            pnl = (price_diff * abs(self.open_size))
+        elif self.side == 'Short':
+            pnl = (price_diff * abs(self.open_size) * -1)
+        else:
+            pnl = 0
+
+        open_value = abs(self.open_size) * self.entry_price
+        pnl_percent = pnl / open_value * 100
+        self.pnl_percent = pnl_percent
+        return pnl
+
+
 class Order:
     def __init__(self, market, side, price_low, price_high, order_type, size, reduce_only=False):
         self.market = market
@@ -161,6 +204,26 @@ class FTXMasterAccount:
                 col = col + balance['total']
                 usd_value = usd_value + balance['usdValue']
         return col, usd_value
+
+    def by_sub_list_positions(self, sub_account: str):
+        positions = []
+        client: FtxClient = self.sub_accounts[sub_account]
+        client_positions = client.get_positions()
+        for pos in client_positions:
+            pnl = pos.get('recentPnl')
+            if pnl is None:
+                pnl = 0
+            position_object = Position(client, sub_account, pos['future'], pos['cost'], pos['netSize'],
+                                       pos['entryPrice'], pnl, pos['realizedPnl'])
+            positions.append(position_object)
+        return positions
+
+    def list_all_positions(self):
+        positions = []
+        for sub in self.sub_account_names:
+            sub_positions = self.by_sub_list_positions(sub)
+            positions.extend(sub_positions)
+        return positions
 
     def get_sub_account_names(self):
         names = []

@@ -69,6 +69,13 @@ class FtxClient:
     def get_trades(self, market: str) -> dict:
         return self._get(f'markets/{market}/trades')
 
+    def get_last_price(self, market: str) -> float:
+        market = self._get(f'markets/{market}')
+        return market['last']
+
+    def get_market(self, market: str) -> dict:
+        return self._get(f'markets/{market}')
+
     def get_account_info(self) -> dict:
         return self._get(f'account')
 
