@@ -19,6 +19,47 @@ import locale
 
 locale.setlocale(locale.LC_ALL, '')
 
+from babel.numbers import format_currency
+
+# Initialise Variables
+global master
+
+class objdict(dict):
+    def __getattr__(self, name):
+        if name in self:
+            return self[name]
+        else:
+            raise AttributeError("No such attribute: " + name)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def __delattr__(self, name):
+        if name in self:
+            del self[name]
+        else:
+            raise AttributeError("No such attribute: " + name)
+
+
+def print_formatting():
+    print(" ")
+    print(" ")
+    print("===========================================================================================================")
+
+
+def print_title(word):
+    length = len(word)
+    topline = ''
+    line = ''
+    for x in range(length):
+        line = line + '_'
+        topline = topline + '-'
+    print(" ")
+    print(topline)
+    print(word)
+    print(topline)
+    print(" ")
+
 
 def validate(document):
     ok = regex.match(
@@ -44,9 +85,38 @@ print('FTX Portfolio Manager')
 print('')
 
 
+def initialise_yaml():
+    with open(r'configuration_dev.yaml') as file:
+        dataMap = yaml.safe_load(file)
+        return dataMap
+
+
+def get_master_accounts():
+    config = initialise_yaml()
+    accounts = config['accounts']
+    return accounts
+
+
 def always_show(answers):
     return True
 
+
+def get_master_account_list():
+    accounts = get_master_accounts()
+    names = []
+    for account in accounts:
+        names.append(account['account_name'])
+    return names
+
+
+master_account_question = [{
+    'type': 'list',
+    'name': 'account_name',
+    'message': 'What master account do you want to use?',
+    'choices': get_master_account_list(),
+    'filter': lambda val: val.lower(),
+    'when': always_show
+}]
 
 operation_question = [{
     'type': 'list',
@@ -170,12 +240,6 @@ questions = [
 ]
 
 
-def initialise_yaml():
-    with open(r'configuration_dev.yaml') as file:
-        dataMap = yaml.safe_load(file)
-        return dataMap
-
-
 # def initialise_account(master_account):
 #     sub_accounts: list = []
 #     initialised_master: FTXMasterAccount = None
@@ -240,18 +304,19 @@ def print_account_details(sub_account: FTXMasterAccount):
 
 
 def print_master_account_summary(account: FTXMasterAccount):
-    print("SUMMARY OF ASSETS")
-    print("-------")
+    print_formatting()
+    print_title("SUMMARY OF ASSETS")
     account_list = ''
     for sub in sorted(account.sub_account_names):
         account_list = account_list + sub + ', '
     account_list = account_list[:-2]
 
+    print("Master Account: [{}]".format(account.account_name))
     print("Accounts: [{}]".format(account_list))
     total_usd_val = round(account.total_usd_value, 2)
     total_btc_val = round(account.total_btc_value, 8)
-    print("Total USD Value of this account: [${}]".format(str(total_usd_val)))
-    print("Total BTC Value of this account: [{} BTC]".format(str(total_btc_val)))
+    print("Total USD Value of this account: {}".format(format_currency(total_usd_val, 'USD', locale='en_US')))
+    print("Total BTC Value of this account: {} BTC".format(str(total_btc_val)))
 
     total_btc_col, btc_usd_val = account.total_btc_collateral
     total_usd_col, usd_usd_val = account.total_usd_collateral
@@ -268,10 +333,8 @@ def print_master_account_summary(account: FTXMasterAccount):
              ["Total", 'N/A', total_usd_val, "100%"]]
     headers = ["Asset", "# Coins Owned", "USD Value", "% of Capital"]
     print(tabulate(table, headers=headers))
-    print("")
-
-    print("SUMMARY OF STRATEGIES")
-    print("-------")
+    print_formatting()
+    print_title("SUMMARY OF STRATEGIES")
     print("Accounts: [{}]".format(account_list))
 
     table = []
@@ -285,11 +348,9 @@ def print_master_account_summary(account: FTXMasterAccount):
 
     headers = ["Sub Account", "USD Value", "% of Capital"]
     print(tabulate(table, headers=headers))
-    print("")
-
-    print("======================================================")
-    print("======================================================")
-    print("")
+    print(" ")
+    print("===========================================================================================================")
+    print(" ")
 
 
 def rebalance_operation(master_account):
@@ -299,12 +360,11 @@ def rebalance_operation(master_account):
 
 def track_liquidity(account: FTXMasterAccount):
     """ Print out the current value in USD liquidity for LRAIC tradable assets"""
-    print("LIQUIDITY TRACKER (1% Away from Asks/Bids)")
-    print("-------")
+    print_formatting()
+    print_title("LIQUIDITY TRACKER (1% Away from Asks/Bids)")
     assets = ["BTC-PERP", "ETH-PERP", "BCH-PERP", "TRX-PERP", "EOS-PERP", "BSV-PERP", "ADA-PERP", "BNB-PERP",
               "XTZ-PERP",
               ]
-    # assets.sort()
     table = []
 
     for asset in assets:
@@ -341,9 +401,7 @@ def track_liquidity(account: FTXMasterAccount):
 
     headers = ["Asset", "USD Ask Liquidity", "USD Bid Liquidity"]
     print(tabulate(table, headers=headers))
-    print("")
-
-    print("======================================================")
+    print_formatting()
 
 
 def ask_rebalance_question(master_account):
@@ -400,36 +458,48 @@ def print_balances(master_account):
     print_master_account_summary(master_account)
 
 
-
 def main():
     try:
-        settings = initialise_yaml()
-        accounts = settings['accounts']
-        master_account = accounts['master_account']
-        empty_subaccount_name = accounts['empty_subaccount']
-        subaccount_names = accounts['subaccount_names']
+        DEBUG = False
 
-        # Initialise accounts
-        master: FTXMasterAccount = FTXMasterAccount(master_account['api_key'], master_account['api_secret'])
-        if subaccount_names is not None:
-            master.sub_account_names.extend(subaccount_names)
-        master.empty_account_name = empty_subaccount_name
+        config = initialise_yaml()
+        accounts = config['accounts']
+        master_account = None
+        if len(accounts) > 1:
+            try:
+                account_answers = prompt(master_account_question, style=custom_style_3)
+                for account in accounts:
+                    if account['account_name'].lower() == account_answers['account_name']:
+                        master_account = account
+            except:
+                master_account = accounts[0]
+                master_account = objdict(master_account)
+                print("Defaulting to account: [{}]".format(master_account.account_name))
+        elif len(accounts == 1):
+            master_account = accounts[0]
+        else:
+            master_account = None
+            print("No master accounts detected. Is your configuration.yaml set up correctly?")
 
-        master.initialise()
+        if master_account is not None:
+            print("got master")
+            master_account = objdict(master_account)
+            anti_algo_subaccount_name = master_account.anti_algo_subaccount_name
+            subaccount_names = master_account.subaccount_names
 
-        # track_liquidity(master)
+            # Initialise accounts
+            master: FTXMasterAccount = FTXMasterAccount(master_account['api_key'], master_account['api_secret'],
+                                                        master_account.account_name)
+            if subaccount_names is not None:
+                master.sub_account_names.extend(subaccount_names)
+            master.anti_algo_subaccount_name = anti_algo_subaccount_name
 
-        print_master_account_summary(master)
-        ask_root_question(master)
+            master.initialise()
 
-        # subs = master.client.list_sub_accounts()
-
-        # for sub in subs:
-        #     master_account.connect('ADAM LRAIC ADA')
-        #     positions = master_account.client.get_positions()
-        #     balances = master_account.client.get_sub_account_balances(sub['nickname'])
-        #     print(balances)
-
+            if not DEBUG:
+                ask_root_question(master)
+            else:
+                print_master_account_summary(master)
 
     except Exception as e:
         print(e)

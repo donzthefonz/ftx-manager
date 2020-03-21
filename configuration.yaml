@@ -1,24 +1,30 @@
 # configuration.yaml file
 
 accounts:
-  # main account should generally be empty of capital/collateral and positions. It will be the managing account for the rest
-  master_account:
-    subaccount_name: ''
-    api_key: ''
-    api_secret: ''
-    master_account: True
-  subaccount1:
-    subaccount_name: ''
-    api_key: ''
-    api_secret: ''
-    master_account: False
-  subaccount2:
-    subaccount_name: ''
-    api_key: ''
-    api_secret: ''
-    master_account: False
-  subaccount3:
-    subaccount_name: ''
-    api_key: ''
-    api_secret: ''
-    master_account: False
+  - account_name: "Example Account Name" # account_name is arbitrary, simply used for printing to the console
+    api_key: 'XxxxXXXXXxxxxXXXXxxxxXXXXX'
+    api_secret: 'YYYYyyyyyYYYYyyyyYYYYYyyy'
+    anti_algo_subaccount_name: 'EMPTY SUB ACCOUNT NAME' # anti_algo_subaccount_name is only necessary if
+                                                        # re-balancing portfolio.
+    subaccount_names: # The script will auto populate with all sub accounts,
+                      #  or you can uncomment the below and specify the sub account names to use
+#      - 'SUB ACCOUNT NAME 1'
+#      - 'SUB ACCOUNT NAME 2'
+#      - 'SUB ACCOUNT NAME 3'
+
+#  - account_name: "" # Uncomment out this and add as many blocks as you like to manage more than one FTX Account
+#    api_key: ''
+#    api_secret: ''
+#    anti_algo_subaccount_name: ''
+#    subaccount_names:
+#      - ''
+#      - ''
+
+
+
+settings:
+  # Ideal Percentages should all add up to 100%
+  ideal_btc_collateral_percentage: 30
+  ideal_usd_collateral_percentage: 50
+  ideal_eth_collateral_percentage: 20
+  ideal_ftt_collateral_percentage: 0

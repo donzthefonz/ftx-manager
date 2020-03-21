@@ -18,16 +18,16 @@ class Order:
             return True
 
 
-
 class FTXMasterAccount:
-    def __init__(self, key, secret):
+    def __init__(self, key, secret, account_name):
+        self.account_name = account_name
         self.client: FtxClient
         self.key = key
         self.secret = secret
         self.sub_account_names = []
         self.sub_accounts = {}
-        self.empty_account = FtxClient
-        self.empty_account_name = ''
+        self.anti_algo_subaccount = FtxClient
+        self.anti_algo_subaccount_name = ''
 
     def initialise(self):
         self.connect()
@@ -38,7 +38,7 @@ class FTXMasterAccount:
         for sub in self.sub_account_names:
             client = FtxClient(self.key, self.secret, sub)
             self.sub_accounts[sub] = client
-        self.empty_account = FtxClient(self.key, self.secret, self.empty_account_name)
+        self.anti_algo_subaccount_name = FtxClient(self.key, self.secret, self.anti_algo_subaccount_name)
 
     def connect(self, account_name=None):
         if account_name is not None:
