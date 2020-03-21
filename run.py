@@ -87,7 +87,7 @@ print('')
 
 
 def initialise_yaml():
-    with open(r'configuration_dev.yaml') as file:
+    with open(r'configuration.yaml') as file:
         dataMap = yaml.safe_load(file)
         return dataMap
 
@@ -331,9 +331,11 @@ def print_master_account_summary(account: FTXMasterAccount):
     usd_percent = str(round(usd_usd_val / total_usd_val * 100, 1)) + "%"
     ftt_percent = str(round(ftt_usd_val / total_usd_val * 100, 1)) + "%"
 
-    table = [["BTC", total_btc_col, btc_usd_val, btc_percent], ["ETH", total_eth_col, eth_usd_val, eth_percent],
-             ["USD", total_usd_col, usd_usd_val, usd_percent], ["FTT", total_ftt_col, ftt_usd_val, ftt_percent],
-             ["Total", 'N/A', total_usd_val, "100%"]]
+    table = [["BTC", round(total_btc_col, 8), format_currency(btc_usd_val, 'USD', locale='en_US'), btc_percent],
+             ["ETH", total_eth_col, format_currency(eth_usd_val, 'USD', locale='en_US'), eth_percent],
+             ["USD", round(total_usd_col, 2), format_currency(usd_usd_val, 'USD', locale='en_US'), usd_percent],
+             ["FTT", total_ftt_col, format_currency(ftt_usd_val, 'USD', locale='en_US'), ftt_percent],
+             ["Total", 'N/A', format_currency(total_usd_val, 'USD', locale='en_US'), "100%"]]
     headers = ["Asset", "# Coins Owned", "USD Value", "% of Capital"]
     print(tabulate(table, headers=headers))
     print_formatting()
@@ -345,7 +347,7 @@ def print_master_account_summary(account: FTXMasterAccount):
     for sub_name, sub_client in account.sub_accounts.items():
         inner_list = []
         inner_list.append(sub_name)
-        inner_list.append(round(account.by_sub_balances_to_usd(sub_name), 2))
+        inner_list.append(format_currency(account.by_sub_balances_to_usd(sub_name), 'USD', locale='en_US'))
         percent_diff = str(round(account.by_sub_balances_to_usd(sub_name) / total_usd_val * 100, 1)) + "%"
         inner_list.append(percent_diff)
         table.append(inner_list)
@@ -447,7 +449,7 @@ def close_all_positions(master_account: FTXMasterAccount):
 
 def ask_root_question(master_account):
     operation_answers = prompt(operation_question, style=custom_style_3)
-    print(str(operation_answers))
+    # print(str(operation_answers))
     if operation_answers['operation'] == 'close positions':
         close_all_positions(master_account)
     elif operation_answers['operation'] == 'view balances':
