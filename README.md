@@ -33,3 +33,5 @@ be fine for now though later I want to add the ability to rebalance portfolios (
 4. Run "pip install -r requirements.txt"
 5. Run "python run.py" - if you have filled the configuration.yaml in properly it should run.
 
+**Screenshots**
+![Alt text](screenshots/view_balances.PNG?raw=true "Balances and Menu")
