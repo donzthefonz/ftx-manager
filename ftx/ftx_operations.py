@@ -232,10 +232,9 @@ class FTXMasterAccount:
             names.append(sub['nickname'])
         return names
 
-    def scaled_order_by_sub(self, subaccount_name, order: Order):
+    def scaled_order_by_sub(self, subaccount_name, market, side, high, low, size, no_orders=20):
         client: FtxClient = self.sub_accounts[subaccount_name]
-        # TODO: scaled order for asset, side, size, low, high, spread
-        pass
+        client.place_scaled_order(market, side, high, low, size, no_orders)
 
     def by_sub_find_open_position_by_market(self, subaccount_name, market_str):
         client: FtxClient = self.sub_accounts[subaccount_name]

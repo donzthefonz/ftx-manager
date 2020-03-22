@@ -60,6 +60,14 @@ class FtxClient:
     def list_markets(self) -> List[dict]:
         return self._get('markets')
 
+    def list_spot_markets(self) -> List[dict]:
+        spot = []
+        markets = self._get('markets')
+        for market in markets:
+            if market.get('type') == 'spot':
+                spot.append(market)
+        return spot
+
     def list_sub_accounts(self) -> List[dict]:
         return self._get('subaccounts/')
 
@@ -127,6 +135,26 @@ class FtxClient:
                                      'postOnly': post_only,
                                      'clientId': client_id,
                                      })
+
+    def place_scaled_order(self, market: str, side: str, price_high: float, price_low: float, size: float,
+                           no_orders: int = 20, reduce_only: bool = False, ioc: bool = False,
+                           post_only: bool = False, client_id: str = None) -> dict:
+        price_diff = price_high - price_low
+        increment = price_diff / (no_orders - 1)
+        price = price_low
+        size = size / no_orders
+        for i in range(no_orders):
+            self._post('orders', {'market': market,
+                                  'side': side,
+                                  'price': price,
+                                  'size': size,
+                                  'type': 'limit',
+                                  'reduceOnly': reduce_only,
+                                  'ioc': ioc,
+                                  'postOnly': post_only,
+                                  'clientId': client_id,
+                                  })
+            price = price + increment
 
     def place_conditional_order(
             self, market: str, side: str, size: float, type: str = 'stop',

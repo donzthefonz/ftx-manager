@@ -141,6 +141,22 @@ def get_positions_list(answers):
     return position_list
 
 
+def get_sub_account_list(answers):
+    accounts = []
+    accounts.append('All Accounts')
+    accounts.extend(master.sub_account_names)
+    return accounts
+
+
+def get_spot_markets(answers):
+    print(answers)
+    names = []
+    markets = master.client.list_spot_markets()
+    for market in markets:
+        names.append(market.get('name'))
+    return names
+
+
 def parse_close_positions(answers, master_account):
     try:
         message = ''
@@ -189,30 +205,49 @@ operation_question = [{
     'when': always_show
 }]
 
-scaled_order_questions = [{
-    'type': 'list',
-    'name': 'account_question',
-    'message': 'Do you want to make an order from a singular account or from all accounts?',
-    # 'choices': get_account_choices(),
-    'choices': ['Singular Account', 'All Accounts'],
-    'filter': lambda val: val.lower(),
-    'when': always_show
-}, {
-    'type': 'list',
-    'name': 'singular_account_question',
-    'message': 'Which account?',
-    # 'choices': get_account_choices(),
-    'choices': ['b coin', 'c coinB'],
-    'filter': lambda val: val.lower(),
-    'when': lambda answers: answers['account_question'] == 'singular account'
-},
+scaled_order_questions = [
+    {
+        'type': 'list',
+        'name': 'account_question',
+        'message': 'Which account do you want to trade from?',
+        'choices': get_sub_account_list,
+        'filter': lambda val: val.lower(),
+        'when': always_show
+    },
     {
         'type': 'list',
         'name': 'asset_question',
-        'message': 'Which asset do you want to trade/buy?',
+        'message': 'Which asset do you want to trade?',
         # 'choices': get_account_choices(),
-        'choices': ['A', 'B'],
+        'choices': ["BTC/USD", "ETH/USD", "FTT/USD"],
         'filter': lambda val: val.lower(),
+        'when': always_show
+    },
+    {
+        'type': 'list',
+        'name': 'buy_or_sell',
+        'message': 'Buying or selling?',
+        # 'choices': get_account_choices(),
+        'choices': ["Buy", "Sell"],
+        'filter': lambda val: val.lower(),
+        'when': always_show
+    },
+    {
+        'type': 'input',
+        'name': 'trade_percentage',
+        'message': 'What percentage of your available holdings do you want to buy/sell?',
+        'when': always_show
+    },
+    {
+        'type': 'input',
+        'name': 'price_high',
+        'message': 'Enter the highest limit price you want to trade?',
+        'when': always_show
+    },
+    {
+        'type': 'input',
+        'name': 'price_low',
+        'message': 'Enter the lowest limit price you want to trade?',
         'when': always_show
     }
 ]
@@ -576,6 +611,10 @@ def ask_position_questions(master_account: FTXMasterAccount):
         print("Cancelled Operation.")
 
 
+def ask_order_questions(master_account: FTXMasterAccount):
+    scaled_order_answers = prompt(scaled_order_questions, style=custom_style_2)
+
+
 def ask_root_question(master_account):
     operation_answers = prompt(operation_question, style=custom_style_3)
     # print(str(operation_answers))
@@ -595,8 +634,8 @@ def ask_root_question(master_account):
         track_liquidity(master_account)
         ask_root_question(master_account)
     elif operation_answers['operation'] == 'scaled order':
-        answers = prompt(scaled_order_questions, style=custom_style_2)
-        # scaled_order(master_account)
+        ask_order_questions(master_account)
+        ask_root_question(master_account)
     else:
         exit()
 
@@ -661,7 +700,7 @@ def main():
                 print(e)
                 # Assume we are in debug mode rather than running from windows CMD
                 # Run feature being tested
-                close_positions(master_account, "short", 50)
+                master_account.scaled_order_by_sub('BF-EOS', 'BTC/USD', 'buy', 4500, 3000, 0.005, no_orders=20)
 
 
     except Exception as e:
