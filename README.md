@@ -13,9 +13,9 @@ If you select them, the script will just exit. I have not written any code for o
   - View Balances (aggregates across multiple subaccounts and summarises them by USD/BTC value and collateral percentages.)
   - Track Liquidity (prints the USD value between bid and - 1% as well as ask + 1% of each asset.)
   - View Positions (across sub accounts)
+  - Close All Positions by X% (capture profits easily when you think we're over bought/sold.)
   
 **To-do List:**
-  - Close All Positions by X% (capiture profits easily when you think we're over bought/sold.)
   - Rebalance Portfolio (give the script your desired % for each collateral and it will buy/sell to get their on each sub account.)
   - Scaled Order (for manual trading - scale into a position from price X to price Y with size Z.)
   
