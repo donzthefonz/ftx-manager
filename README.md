@@ -16,7 +16,7 @@ If you select them, the script will just exit. I have not written any code for o
   - Close All Positions by X% (capture profits easily when you think we're over bought/sold.)
   
 **To-do List:**
-  - Rebalance Portfolio (give the script your desired % for each collateral and it will buy/sell to get their on each sub account.)
+  - Rebalance Portfolio (give the script your desired % for each collateral and it will buy/sell automatically on each sub account.)
   - Scaled Order (for manual trading - scale into a position from price X to price Y with size Z.)
   
   
