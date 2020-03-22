@@ -10,7 +10,7 @@ If you select them, the script will just exit. I have not written any code for o
 
 
 **Working Features:**
-  - View Balances (aggregates across multiple subaccounts and summarises them by USD/BTC value and collateral percentages.)
+  - View Balances (aggregates across multiple subaccounts and summarizes them by USD/BTC value and collateral percentages.)
   - Track Liquidity (prints the USD value between bid and - 1% as well as ask + 1% of each asset.)
   - View Positions (across sub accounts)
   - Close All Positions by X% (capture profits easily when you think we're over bought/sold.)
