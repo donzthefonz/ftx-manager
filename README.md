@@ -29,7 +29,7 @@ be fine for now though later I want to add the ability to rebalance portfolios (
 
 1. Download the zip and extract it.
 2. Open up command prompt and enter "cd C:\Users\localuser\Downloads\ftx-manager\" (replace folder location with your local path)
-3. Create new virtual environment and activate it.
+3. Create new virtual environment and activate it. - https://djangocentral.com/how-to-a-create-virtual-environment-for-python/
 4. Run "pip install -r requirements.txt"
 5. Run "python run.py" - if you have filled the configuration.yaml in properly it should run.
 
