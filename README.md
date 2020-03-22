@@ -35,3 +35,7 @@ be fine for now though later I want to add the ability to rebalance portfolios (
 
 **Screenshots**
 ![Alt text](screenshots/view_balances.PNG?raw=true "Balances and Menu")
+
+![Alt text](screenshots/positions.JPG?raw=true "View Positions")
+
+![Alt text](screenshots/close_positions.JPG?raw=true "Close Positions")
