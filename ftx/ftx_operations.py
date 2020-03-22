@@ -236,3 +236,42 @@ class FTXMasterAccount:
         client: FtxClient = self.sub_accounts[subaccount_name]
         # TODO: scaled order for asset, side, size, low, high, spread
         pass
+
+    def by_sub_find_open_position_by_market(self, subaccount_name, market_str):
+        client: FtxClient = self.sub_accounts[subaccount_name]
+        positions = client.get_positions()
+        positions_to_close = []
+        for position in positions:
+            if position.get('netSize') != 0:
+                if position.get('future').lower() == market_str:
+                    positions_to_close.append(position)
+                elif market_str == 'all':
+                    positions_to_close.append(position)
+                elif market_str == 'long':
+                    if position.get('netSize') > 0:
+                        positions_to_close.append(position)
+                elif market_str == 'short':
+                    if position.get('netSize') < 0:
+                        positions_to_close.append(position)
+        return positions_to_close
+
+    def by_sub_close_positions(self, subaccount_name, positions, close_percent):
+        client: FtxClient = self.sub_accounts[subaccount_name]
+        result = None
+        for position in positions:
+            close_size = position.get('openSize') / 100 * close_percent
+            if position.get('netSize') > 0:
+                # Position is Long so we must sell
+                result = client.place_order(market=position.get('future'), side='sell', price=None, type='market',
+                                   size=close_size, reduce_only=True)
+            elif position.get('netSize') < 0:
+                # Position is Short so we must buy
+                result = client.place_order(market=position.get('future'), side='buy', price=None, type='market',
+                                   size=close_size, reduce_only=True)
+        return result
+
+    def close_positions(self, market_str, close_percent):
+        for sub in self.sub_account_names:
+            positions = self.by_sub_find_open_position_by_market(sub, market_str)
+            if len(positions) > 0:
+                self.by_sub_close_positions(sub, positions, close_percent)

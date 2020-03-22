@@ -11,7 +11,7 @@ from pprint import pprint
 from PyInquirer import style_from_dict, Token, prompt
 from PyInquirer import Validator, ValidationError, print_json
 
-from examples import custom_style_3, custom_style_2
+from examples import custom_style_3, custom_style_2, custom_style_1
 import yaml
 from ftx.ftx_operations import FTXMasterAccount, Position, Order
 from tabulate import tabulate
@@ -86,7 +86,6 @@ def validate_percent(document):
             cursor_position=len(document.text))  # Move cursor to end
 
 
-
 class NumberValidator(Validator):
     def validate(self, document):
         try:
@@ -140,6 +139,35 @@ def get_positions_list(answers):
         position_details = position.market
         position_list.append(position_details)
     return position_list
+
+
+def parse_close_positions(answers, master_account):
+    try:
+        message = ''
+        # print("get_positions_confirmation_message")
+        # print(answers)
+        if answers['positions_operation'] != 'close a position':
+            if answers['positions_operation'] == 'close all positions':
+                market = 'all'
+                market_message = 'All Positions'
+            elif answers['positions_operation'] == 'close long positions':
+                market = 'long'
+                market_message = 'All Long Positions'
+            elif answers['positions_operation'] == 'close short positions':
+                market = 'short'
+                market_message = 'All Short Positions'
+        else:
+            market = answers['which_position']
+            market_message = 'position in ' + answers['which_position']
+        close_size = int(answers['close_percent'])
+        if close_size > 0 and close_size < 101:
+            print("Are you sure you want to close [{}] by [{}%]?".format(market_message, close_size))
+            return market, close_size
+        else:
+            print("Can't close position size by [{}]. Please try again and choose a number between 1 and 100.")
+            ask_root_question(master_account)
+    except Exception as e:
+        print(e)
 
 
 master_account_question = [{
@@ -198,6 +226,15 @@ account_question = [{
     'filter': lambda val: val.lower()
 }]
 
+confirm_question = [
+    {
+        'type': 'list',
+        'name': 'confirm',
+        'message': 'Are you sure you want to continue?',
+        'choices': ['No', 'Yes'],
+        'filter': lambda val: val.lower()
+    }]
+
 position_questions = [
     {
         'type': 'list',
@@ -218,8 +255,8 @@ position_questions = [
     {
         'type': 'input',
         'name': 'close_percent',
-        'message': 'Which percentage of the chosen positions do you want to close?',
-    }
+        'message': 'What percentage of the chosen positions do you want to close? Enter a number between 1 and 100.',
+    },
 ]
 
 rebalance_question = [{
@@ -519,8 +556,24 @@ def view_positions(master_account):
     print_formatting()
 
 
+def close_positions(master_account: FTXMasterAccount, market: str, close_percent: int):
+    """ Close 1 or many positions by X% """
+    try:
+        master_account.close_positions(market, close_percent=close_percent)
+        print("Success!")
+    except Exception as e:
+        print("Uhoh, Exception!: {}".format(e))
+        print("Recommended you check your FTX accounts/positions manually!")
+
+
 def ask_position_questions(master_account: FTXMasterAccount):
     position_answers = prompt(position_questions, style=custom_style_3)
+    market, close_percent = parse_close_positions(position_answers, master_account)
+    confirm_answer = prompt(confirm_question, style=custom_style_3)
+    if confirm_answer['confirm'] == 'yes':
+        close_positions(master_account, market, close_percent)
+    else:
+        print("Cancelled Operation.")
 
 
 def ask_root_question(master_account):
@@ -540,6 +593,7 @@ def ask_root_question(master_account):
         pass
     elif operation_answers['operation'] == 'track liquidity':
         track_liquidity(master_account)
+        ask_root_question(master_account)
     elif operation_answers['operation'] == 'scaled order':
         answers = prompt(scaled_order_questions, style=custom_style_2)
         # scaled_order(master_account)
@@ -607,7 +661,7 @@ def main():
                 print(e)
                 # Assume we are in debug mode rather than running from windows CMD
                 # Run feature being tested
-                get_positions_list(master_account)
+                close_positions(master_account, "short", 50)
 
 
     except Exception as e:
