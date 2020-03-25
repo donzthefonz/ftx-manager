@@ -1,6 +1,29 @@
 from ftx.rest.client import FtxClient
 
 
+class Balance:
+    def __init__(self, coin, usd_value, total, free):
+        self.coin = coin
+        self.usd_value = usd_value
+        self.total = total
+        self.free = free
+
+
+class SubBalance:
+    def __init__(self, sub_name, usd_value, balances: [Balance]):
+        self.sub_name = sub_name
+        self.usd_value = usd_value
+        self.balances = balances
+
+
+class TransferInstructions:
+    def __init__(self, coin, size, source_account, destination_account):
+        self.coin = coin
+        self.size = size
+        self.source_account = source_account
+        self.destination_account = destination_account
+
+
 class Position:
     def __init__(self, client, sub_account, market, cost, open_size, entry_price, recent_pnl, alltime_pnl):
         self.client = client
@@ -95,6 +118,7 @@ class FTXMasterAccount:
     def total_usd_value(self):
         """ Returns the total USD value of all accounts."""
         total_usd = 0
+        total_usd = total_usd + self.by_sub_balances_to_usd()
         for sub in self.sub_account_names:
             total_usd = total_usd + self.by_sub_balances_to_usd(sub)
         return total_usd
@@ -114,6 +138,9 @@ class FTXMasterAccount:
         """ Returns the total USD collateral and value of all accounts."""
         total_col = 0
         total_usd_val = 0
+        col, usd_val = self.by_sub_usd_collateral()
+        total_col = total_col + col
+        total_usd_val = total_usd_val + usd_val
         for sub in self.sub_account_names:
             col, usd_val = self.by_sub_usd_collateral(sub)
             total_col = total_col + col
@@ -125,6 +152,9 @@ class FTXMasterAccount:
         """ Returns the total BTC collateral and value of all accounts."""
         total_col = 0
         total_usd_val = 0
+        col, usd_val = self.by_sub_btc_collateral()
+        total_col = total_col + col
+        total_usd_val = total_usd_val + usd_val
         for sub in self.sub_account_names:
             col, usd_val = self.by_sub_btc_collateral(sub)
             total_col = total_col + col
@@ -136,6 +166,9 @@ class FTXMasterAccount:
         """ Returns the total ETH collateral and value of all accounts."""
         total_col = 0
         total_usd_val = 0
+        col, usd_val = self.by_sub_eth_collateral()
+        total_col = total_col + col
+        total_usd_val = total_usd_val + usd_val
         for sub in self.sub_account_names:
             col, usd_val = self.by_sub_eth_collateral(sub)
             total_col = total_col + col
@@ -147,24 +180,33 @@ class FTXMasterAccount:
         """ Returns the total FTT collateral and value of all accounts."""
         total_col = 0
         total_usd_val = 0
+        col, usd_val = self.by_sub_ftt_collateral()
+        total_col = total_col + col
+        total_usd_val = total_usd_val + usd_val
         for sub in self.sub_account_names:
             col, usd_val = self.by_sub_ftt_collateral(sub)
             total_col = total_col + col
             total_usd_val = total_usd_val + usd_val
         return total_col, total_usd_val
 
-    def by_sub_balances_to_usd(self, sub_account: str):
+    def by_sub_balances_to_usd(self, sub_account: str = None):
         usd = 0
-        client: FtxClient = self.sub_accounts[sub_account]
+        if sub_account:
+            client: FtxClient = self.sub_accounts[sub_account]
+        else:
+            client = self.client
         balances = client.get_balances()
         for balance in balances:
             usd = usd + balance['usdValue']
         return usd
 
-    def by_sub_eth_collateral(self, sub_account: str):
+    def by_sub_eth_collateral(self, sub_account: str = None):
         usd_value = 0
         col = 0
-        client: FtxClient = self.sub_accounts[sub_account]
+        if sub_account:
+            client: FtxClient = self.sub_accounts[sub_account]
+        else:
+            client = self.client
         balances = client.get_balances()
         for balance in balances:
             if balance['coin'] == 'ETH':
@@ -172,10 +214,13 @@ class FTXMasterAccount:
                 usd_value = usd_value + balance['usdValue']
         return col, usd_value
 
-    def by_sub_btc_collateral(self, sub_account: str):
+    def by_sub_btc_collateral(self, sub_account: str = None):
         usd_value = 0
         col = 0
-        client: FtxClient = self.sub_accounts[sub_account]
+        if sub_account:
+            client: FtxClient = self.sub_accounts[sub_account]
+        else:
+            client = self.client
         balances = client.get_balances()
         for balance in balances:
             if balance['coin'] == 'BTC':
@@ -183,10 +228,13 @@ class FTXMasterAccount:
                 usd_value = usd_value + balance['usdValue']
         return col, usd_value
 
-    def by_sub_usd_collateral(self, sub_account: str):
+    def by_sub_usd_collateral(self, sub_account: str = None):
         usd_value = 0
         col = 0
-        client: FtxClient = self.sub_accounts[sub_account]
+        if sub_account:
+            client: FtxClient = self.sub_accounts[sub_account]
+        else:
+            client = self.client
         balances = client.get_balances()
         for balance in balances:
             if balance['coin'] == 'USD' or balance['coin'] == 'USDT':
@@ -194,10 +242,13 @@ class FTXMasterAccount:
                 usd_value = usd_value + balance['usdValue']
         return col, usd_value
 
-    def by_sub_ftt_collateral(self, sub_account: str):
+    def by_sub_ftt_collateral(self, sub_account: str = None):
         usd_value = 0
         col = 0
-        client: FtxClient = self.sub_accounts[sub_account]
+        if sub_account:
+            client: FtxClient = self.sub_accounts[sub_account]
+        else:
+            client = self.client
         balances = client.get_balances()
         for balance in balances:
             if balance['coin'] == 'FTT':
@@ -205,9 +256,12 @@ class FTXMasterAccount:
                 usd_value = usd_value + balance['usdValue']
         return col, usd_value
 
-    def by_sub_list_positions(self, sub_account: str):
+    def by_sub_list_positions(self, sub_account: str = None):
         positions = []
-        client: FtxClient = self.sub_accounts[sub_account]
+        if sub_account:
+            client: FtxClient = self.sub_accounts[sub_account]
+        else:
+            client = self.client
         client_positions = client.get_positions()
         for pos in client_positions:
             pnl = pos.get('recentPnl')
@@ -220,6 +274,8 @@ class FTXMasterAccount:
 
     def list_all_positions(self):
         positions = []
+        sub_positions = self.by_sub_list_positions()
+        positions.extend(sub_positions)
         for sub in self.sub_account_names:
             sub_positions = self.by_sub_list_positions(sub)
             positions.extend(sub_positions)
@@ -232,12 +288,35 @@ class FTXMasterAccount:
             names.append(sub['nickname'])
         return names
 
-    def scaled_order_by_sub(self, subaccount_name, market, side, high, low, size, no_orders=20):
-        client: FtxClient = self.sub_accounts[subaccount_name]
-        client.place_scaled_order(market, side, high, low, size, no_orders)
+    def scaled_order_all(self, market, side, high, low, percent_size, no_orders=20):
+        subs = self.sub_account_names
+        for sub in subs:
+            self.by_sub_scaled_order(sub, market, side, high, low, percent_size, no_orders)
+
+    def by_sub_scaled_order(self, subaccount_name, market, side, high, low, percent_size, no_orders=10):
+        if subaccount_name is not None:
+            client: FtxClient = self.sub_accounts[subaccount_name.upper()]
+        else:
+            client = self.client
+        usd_size = client.get_free_usd_balance()
+        usd_pos_size = usd_size / 100 * percent_size
+        coin_price = client.get_last_price(market)
+        coin_size = usd_pos_size / coin_price
+        if usd_pos_size / no_orders > 1:
+            client.place_scaled_order(market, side, high, low, coin_size, no_orders)
+            print(
+                "Successfully placed scaled order in Sub Account: {}    |   Market: {}".format(subaccount_name, market))
+            return True
+        else:
+            print("USD Balance too low for this order. Free USD: ${}   |   Sub Account: {}".format(usd_size,
+                                                                                                   subaccount_name))
+            return False
 
     def by_sub_find_open_position_by_market(self, subaccount_name, market_str):
-        client: FtxClient = self.sub_accounts[subaccount_name]
+        if subaccount_name is not None:
+            client: FtxClient = self.sub_accounts[subaccount_name.upper()]
+        else:
+            client = self.client
         positions = client.get_positions()
         positions_to_close = []
         for position in positions:
@@ -255,18 +334,21 @@ class FTXMasterAccount:
         return positions_to_close
 
     def by_sub_close_positions(self, subaccount_name, positions, close_percent):
-        client: FtxClient = self.sub_accounts[subaccount_name]
+        if subaccount_name is not None:
+            client: FtxClient = self.sub_accounts[subaccount_name.upper()]
+        else:
+            client = self.client
         result = None
         for position in positions:
             close_size = position.get('openSize') / 100 * close_percent
             if position.get('netSize') > 0:
                 # Position is Long so we must sell
                 result = client.place_order(market=position.get('future'), side='sell', price=None, type='market',
-                                   size=close_size, reduce_only=True)
+                                            size=close_size, reduce_only=True)
             elif position.get('netSize') < 0:
                 # Position is Short so we must buy
                 result = client.place_order(market=position.get('future'), side='buy', price=None, type='market',
-                                   size=close_size, reduce_only=True)
+                                            size=close_size, reduce_only=True)
         return result
 
     def close_positions(self, market_str, close_percent):
@@ -274,3 +356,46 @@ class FTXMasterAccount:
             positions = self.by_sub_find_open_position_by_market(sub, market_str)
             if len(positions) > 0:
                 self.by_sub_close_positions(sub, positions, close_percent)
+
+    def all_usd_flat(self):
+        for sub in self.sub_account_names:
+            self.by_sub_usd_flat(sub)
+
+    def by_sub_usd_flat(self, subaccount_name):
+        if subaccount_name is not None:
+            client: FtxClient = self.sub_accounts[subaccount_name.upper()]
+        else:
+            client = self.client
+        balances = client.get_balances()
+        for balance in balances:
+            if balance['coin'] == 'BTC' or balance['coin'] == 'ETH':
+                free = balance['free']
+                if free > 0:
+                    market = balance['coin'] + '/USD'
+                    client.place_order(market, 'sell', price=None, size=free, type='market')
+
+    def get_all_balances(self):
+        sub_balances_list = []
+        balances, total_usd_value = self.by_sub_get_balances()
+        sub_balance = SubBalance('Main Account', total_usd_value, balances)
+        sub_balances_list.append(sub_balance)
+        for sub in self.sub_account_names:
+            balances, total_usd_value = self.by_sub_get_balances(sub)
+            sub_balance = SubBalance(sub, total_usd_value, balances)
+            sub_balances_list.append(sub_balance)
+
+        return sub_balances_list
+
+    def by_sub_get_balances(self, subaccount_name=None):
+        if subaccount_name is not None:
+            client: FtxClient = self.sub_accounts[subaccount_name.upper()]
+        else:
+            client = self.client
+        balances = client.get_balances()
+        balance_objects = []
+        total_usd_value = 0
+        for balance in balances:
+            balance_object = Balance(balance['coin'], balance['usdValue'], balance['total'], balance['free'])
+            balance_objects.append(balance_object)
+            total_usd_value = total_usd_value + balance['usdValue']
+        return balance_objects, total_usd_value

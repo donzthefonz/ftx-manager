@@ -126,7 +126,7 @@ def get_master_account_list():
     names = []
     for account in accounts:
         names.append(account['account_name'])
-    return names
+    return sorted(names)
 
 
 def get_positions_list(answers):
@@ -145,7 +145,7 @@ def get_sub_account_list(answers):
     accounts = []
     accounts.append('All Accounts')
     accounts.extend(master.sub_account_names)
-    return accounts
+    return sorted(accounts)
 
 
 def get_spot_markets(answers):
@@ -248,6 +248,12 @@ scaled_order_questions = [
         'type': 'input',
         'name': 'price_low',
         'message': 'Enter the lowest limit price you want to trade?',
+        'when': always_show
+    },
+    {
+        'type': 'input',
+        'name': 'no_orders',
+        'message': 'How many trades do you want to spread the total size between?',
         'when': always_show
     }
 ]
@@ -427,7 +433,7 @@ def print_account_details(sub_account: FTXMasterAccount):
 def print_master_account_summary(account: FTXMasterAccount):
     print_formatting()
     print_title("SUMMARY OF ASSETS")
-    account_list = ''
+    account_list = 'Main Account, '
     for sub in sorted(account.sub_account_names):
         account_list = account_list + sub + ', '
     account_list = account_list[:-2]
@@ -464,6 +470,13 @@ def print_master_account_summary(account: FTXMasterAccount):
     print(" ")
 
     table = []
+    # Add Main Account first
+    inner_list = []
+    inner_list.append("Main Account")
+    inner_list.append(format_currency(account.by_sub_balances_to_usd(), 'USD', locale='en_US'))
+    percent_diff = str(round(account.by_sub_balances_to_usd() / total_usd_val * 100, 1)) + "%"
+    inner_list.append(percent_diff)
+    table.append(inner_list)
     for sub_name, sub_client in account.sub_accounts.items():
         inner_list = []
         inner_list.append(sub_name)
@@ -479,9 +492,25 @@ def print_master_account_summary(account: FTXMasterAccount):
     print(" ")
 
 
-def rebalance_operation(master_account):
-    pass
-    # Ask user which account to centralise all capital before distributing it again.
+def rebalance_operation(master_account: FTXMasterAccount):
+    """ Take all sub accounts and try to rebalance them evenly.
+        Start with the accounts with greatest difference and then recursively even them out."""
+    sub_balances = master_account.get_all_balances()
+    min = 99999
+    max = 0
+    minBalance = None
+    maxBalance = None
+    for balance in sub_balances:
+        if balance.usd_value < min:
+            min = balance.usd_value
+            minBalance = balance
+        elif balance.usd_value > max:
+            max = balance.usd_value
+            maxBalance = balance
+
+    diff = max - min
+
+
 
 
 def track_liquidity(account: FTXMasterAccount):
@@ -613,6 +642,23 @@ def ask_position_questions(master_account: FTXMasterAccount):
 
 def ask_order_questions(master_account: FTXMasterAccount):
     scaled_order_answers = prompt(scaled_order_questions, style=custom_style_2)
+    print(scaled_order_answers)
+    account = scaled_order_answers['account_question']
+    market = str(scaled_order_answers['asset_question']).capitalize()
+    side = scaled_order_answers['buy_or_sell']
+    trade_percentage = scaled_order_answers['trade_percentage']
+    high = scaled_order_answers['price_high']
+    low = scaled_order_answers['price_low']
+    no_orders = scaled_order_answers['no_orders']
+
+    print(scaled_order_answers)
+
+    if account == 'all accounts':
+        master_account.scaled_order_all(market=market, side=side, high=high, low=low, percent_size=trade_percentage,
+                                        no_orders=no_orders)
+    else:
+        master_account.by_sub_scaled_order(account, market=market, side=side, high=high, low=low,
+                                           percent_size=trade_percentage, no_orders=no_orders)
 
 
 def ask_root_question(master_account):
@@ -671,7 +717,7 @@ def main():
                 master_account = accounts[0]
                 master_account = objdict(master_account)
                 print("Defaulting to account: [{}]".format(master_account.account_name))
-        elif len(accounts == 1):
+        elif len(accounts) == 1:
             master_account = accounts[0]
         else:
             master_account = None
@@ -698,9 +744,22 @@ def main():
                 ask_root_question(master_account)
             except Exception as e:
                 print(e)
+
+                #rebalance_operation(master_account)
+                balances = master_account.get_all_balances()
+
                 # Assume we are in debug mode rather than running from windows CMD
                 # Run feature being tested
-                master_account.scaled_order_by_sub('BF-EOS', 'BTC/USD', 'buy', 4500, 3000, 0.005, no_orders=20)
+                # master_account.by_sub_get_size_free_collateral('ADAM LRAIC ADA', 50)
+                # master_account.scaled_order_all('BTC/USD', 'buy', 4500, 3000, 50, no_orders=2)
+                # master_account.by_sub_usd_flat('ADAM LRAIC ADA')
+                # master_account.by_sub_scaled_order('adam lraic bch', market='BTC/USD', side='buy', high=4500, low=3050,
+                #                                    percent_size=100, no_orders=20)
+                # master_account.all_usd_flat()
+                # master_account.scaled_order_all(market='BTC/USD', side='buy', high=4500, low=3050,
+                #                                 percent_size=100, no_orders=20)
+                # master_account.by_sub_scaled_order('ADAM LRAIC ADA', market='BTC/USD', side='buy', high=4500, low=3050,
+                #                                    percent_size=100, no_orders=20)
 
 
     except Exception as e:

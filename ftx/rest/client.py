@@ -194,6 +194,13 @@ class FtxClient:
     def get_balances(self) -> List[dict]:
         return self._get('wallet/balances')
 
+    def get_free_usd_balance(self) -> float:
+        balances = self._get('wallet/balances')
+        for balance in balances:
+            if balance['coin'] == 'USD':
+                return balance['free']
+        return 0
+
     def get_deposit_address(self, ticker: str) -> dict:
         return self._get(f'wallet/deposit_address/{ticker}')
 
