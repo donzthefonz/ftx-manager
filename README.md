@@ -14,10 +14,11 @@ If you select them, the script will just exit. I have not written any code for o
   - Track Liquidity (prints the USD value between bid and - 1% as well as ask + 1% of each asset.)
   - View Positions (across sub accounts)
   - Close All Positions by X% (capture profits easily when you think we're over bought/sold.)
+  - Scaled Order (for manual trading - scale into a position from price X to price Y with size Z. Only works for some markets, will ad more later.)
   
 **To-do List:**
   - Rebalance Portfolio (give the script your desired % for each collateral and it will buy/sell automatically on each sub account.)
-  - Scaled Order (for manual trading - scale into a position from price X to price Y with size Z.)
+  
   
   
   
